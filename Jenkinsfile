@@ -24,7 +24,7 @@
 pipeline {
     agent any
     environment {
-        AWS_CREDENTIALS = credentials('aws-credentials-file-id')
+        AWS_CREDENTIALS = credentials('aws-secret-credentials')
     }
     stages {
         stage('AWS Demo') {
