@@ -23,17 +23,26 @@
 // }
 pipeline {
     agent any
-    stages{
-        stage("AWS Demo"){
-            steps{
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-jenkins-demo',
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']])
+    environment {
+        AWS_CREDENTIALS = credentials('aws-credentials-file-id')
+    }
+    stages {
+        stage('AWS Demo') {
+            steps {
+                script {
+                    // Read the contents of the secret file
+                    def credsFileContent = readFile "${AWS_CREDENTIALS}"
+                    
+                    // Parse the content to get access key ID and secret access key
+                    def awsAccessKeyId = credsFileContent.readLines().find { it.startsWith('AWS_ACCESS_KEY_ID=') }?.split('=')[1]?.trim()
+                    def awsSecretAccessKey = credsFileContent.readLines().find { it.startsWith('AWS_SECRET_ACCESS_KEY=') }?.split('=')[1]?.trim()
+                    
+                    // Use the credentials in your AWS-related steps
+                    sh "export AWS_ACCESS_KEY_ID=${awsAccessKeyId} && export AWS_SECRET_ACCESS_KEY=${awsSecretAccessKey}"
+                }
             }
-        
         }
+    }
         stage('Terraform Init') {
             steps {
                 // Assuming terraform executable is in the PATH
@@ -47,4 +56,3 @@ pipeline {
             }
         }
     }
-}
